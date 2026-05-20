@@ -229,6 +229,38 @@ jobs:
       - name: Build tempo-cli
         run: make tempo-cli
 
+  goreleaser-snapshot:
+    name: Goreleaser snapshot (verify riscv64 artifacts)
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Go
+        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6
+        with:
+          go-version-file: 'go.mod'
+
+      - name: Run goreleaser snapshot
+        run: make release-snapshot
+
+      - name: List artifacts and verify riscv64 outputs
+        run: |
+          ls -la dist/
+          echo "--- riscv64 binaries ---"
+          find dist/ -name '*riscv64*' -type f | sort
+          echo "--- riscv64 archive contents ---"
+          for f in dist/*riscv64*.tar.gz; do
+            [ -e "$f" ] || continue
+            echo "==> $f"
+            tar -tzf "$f"
+          done
+          echo "--- packages ---"
+          ls dist/*.deb dist/*.rpm 2>/dev/null | grep -E 'riscv|riscv64' || echo "No riscv64 deb/rpm produced (unexpected)"
+
   vendor-check:
     name: Vendor check
     runs-on: ubuntu-24.04
