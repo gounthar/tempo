@@ -244,8 +244,16 @@ jobs:
         with:
           go-version-file: 'go.mod'
 
+      - name: Install goreleaser binary
+        run: |
+          # Bypass the Makefile path (go install of goreleaser v1.25.1
+          # fails on recent Go due to golang.org/x/tools@v0.19.0).
+          curl -sSL https://github.com/goreleaser/goreleaser/releases/download/v1.25.1/goreleaser_Linux_x86_64.tar.gz \
+            | sudo tar -xzC /usr/local/bin goreleaser
+          goreleaser --version
+
       - name: Run goreleaser snapshot
-        run: make release-snapshot
+        run: goreleaser release --skip-validate --rm-dist --snapshot
 
       - name: List artifacts and verify riscv64 outputs
         run: |
